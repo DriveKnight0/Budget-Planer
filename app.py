@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify, render_template
 from chatbot import SmartBudgetAIChatbot
 from flask_cors import CORS
+import os
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
@@ -31,5 +32,5 @@ def chat():
         print(f"Error in chat route: {str(e)}")  # Add error logging
         return jsonify({'error': str(e)}), 500
 
-if __name__ == '__main__':
-    app.run(debug=True)
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
