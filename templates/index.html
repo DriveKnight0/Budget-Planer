@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Budget AI Chatbot</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-blue: #4A90E2;
+            --primary-red: #E74C3C;
+            --primary-green: #2ECC71;
+            --primary-yellow: #F1C40F;
+        }
+        
+        .chat-container {
+            height: calc(100vh - 180px);
+            background-color: #f8f9fa;
+        }
+        
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .pie-chart-logo {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: conic-gradient(
+                #4A90E2 0deg 180deg,
+                #E74C3C 180deg 270deg,
+                #2ECC71 270deg 360deg
+            );
+            position: relative;
+        }
+        
+        .pie-chart-logo::after {
+            content: '$';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #F1C40F;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        .user-message {
+            background-color: #4A90E2;
+            color: white;
+        }
+
+        .bot-message {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-left: 4px solid #2ECC71;
+        }
+
+        .send-button {
+            background-color: #4A90E2;
+            transition: all 0.3s ease;
+        }
+
+        .send-button:hover {
+            background-color: #357ABD;
+        }
+
+        .header-gradient {
+            background: linear-gradient(135deg, #4A90E2 0%, #357ABD 100%);
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div class="container mx-auto px-4 py-8">
+        <div class="max-w-4xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden">
+            <!-- Header -->
+            <div class="header-gradient p-6 flex items-center justify-between">
+                <div class="logo-section">
+                    <div class="pie-chart-logo"></div>
+                    <div>
+                        <h1 class="text-2xl font-bold text-white">Smart Budget AI</h1>
+                        <p class="text-sm text-blue-100">Your Intelligent Financial Advisor</p>
+                    </div>
+                </div>
+                <div class="flex gap-2">
+                    <span class="px-3 py-1 bg-green-500 text-white rounded-full text-sm">Live</span>
+                </div>
+            </div>
+
+            <!-- Chat Container -->
+            <div class="chat-container overflow-y-auto p-6" id="chatContainer">
+                <div class="space-y-4" id="chatMessages">
+                    <!-- Messages will be added here -->
+                </div>
+            </div>
+
+            <!-- Input Area -->
+            <div class="border-t border-gray-200 p-6 bg-white">
+                <form id="chatForm" class="flex space-x-4">
+                    <input type="text" 
+                           id="userInput" 
+                           class="flex-1 border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                           placeholder="Ask me about your finances...">
+                    <button type="submit" 
+                            class="send-button text-white px-8 py-3 rounded-xl hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 ease-in-out">
+                        Send
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('chatForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const userInput = document.getElementById('userInput');
+            const message = userInput.value.trim();
+            
+            if (!message) return;
+            
+            // Add user message to chat
+            addMessage('user', message);
+            userInput.value = '';
+            
+            try {
+                const response = await fetch('/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ input: message })
+                });
+                
+                const data = await response.json();
+                
+                if (data.error) {
+                    addMessage('bot', `Error: ${data.error}`);
+                } else {
+                    addMessage('bot', data.response);
+                }
+            } catch (error) {
+                addMessage('bot', 'Sorry, I encountered an error. Please try again.');
+            }
+            
+            // Scroll to bottom
+            const chatContainer = document.getElementById('chatContainer');
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        });
+        
+        function addMessage(role, content) {
+            const chatMessages = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `flex ${role === 'user' ? 'justify-end' : 'justify-start'}`;
+            
+            const messageBubble = document.createElement('div');
+            messageBubble.className = `max-w-[70%] rounded-xl p-4 ${
+                role === 'user' 
+                    ? 'user-message shadow-sm' 
+                    : 'bot-message shadow-sm'
+            }`;
+            
+            // Handle multiline content
+            const formattedContent = content.split('\n').map(line => {
+                if (line.trim().startsWith('•')) {
+                    return `<span class="block pl-2 border-l-2 border-gray-300 my-1">${line}</span>`;
+                }
+                return `<span class="block">${line}</span>`;
+            }).join('');
+            
+            messageBubble.innerHTML = formattedContent;
+            
+            messageDiv.appendChild(messageBubble);
+            chatMessages.appendChild(messageDiv);
+        }
+        
+        // Add initial greeting
+        window.addEventListener('load', () => {
+            addMessage('bot', 'Hey there! 👋 I\'m Fin, your money-savvy friend!\n\n' +
+                      'I love chatting about:\n' +
+                      '💰 Smart ways to save\n' +
+                      '🎯 Cool budget tricks\n' +
+                      '💡 Making your money work harder\n\n' +
+                      'What\'s on your mind? Let\'s chat about your money goals! 😊');
+        });
+    </script>
+</body>
+</html> 
